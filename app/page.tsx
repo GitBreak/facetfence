@@ -449,6 +449,8 @@ function SignupSection() {
   const [plan, setPlan] = React.useState("Growth");
   const [agree, setAgree] = React.useState(false);
   const [ok, setOk] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -491,9 +493,16 @@ function SignupSection() {
             I agree to the <a href="#terms" className="underline">Terms</a> and <a href="#privacy" className="underline">Privacy Policy</a>.
           </label>
 
-          <button type="submit" disabled={!agree} onClick={() => track('cta_click', { cta: 'signup_submit' })} className="mt-6 w-full rounded-2xl px-5 py-3 font-semibold disabled:opacity-60" style={{ background: brand.blue }}>
-            {ok ? 'You\'re in! We\'ll email you shortly.' : 'Create my trial'}
-          </button>
+          <button
+  type="submit"
+  disabled={!agree || loading}
+  onClick={() => track('cta_click', { cta: 'signup_submit' })}
+  className="mt-6 w-full rounded-2xl px-5 py-3 font-semibold disabled:opacity-60"
+  style={{ background: brand.blue }}
+>
+  {ok ? 'You’re in! We’ll email you shortly.' : loading ? 'Submitting…' : 'Create my trial'}
+</button>
+
 
           {ok && (
             <p className="mt-3 text-center text-white/70 text-sm">Thanks! We\'ll review your store and send activation steps.</p>
@@ -510,35 +519,81 @@ function ContactSection() {
   const [msg, setMsg] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [sent, setSent] = React.useState(false);
-  function send(e: React.FormEvent) {
+  const [loading, setLoading] = React.useState(false);
+
+  async function send(e: React.FormEvent) {
     e.preventDefault();
-    track('contact_submit', { email });
-    setSent(true);
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, msg }),
+      });
+      track("contact_submit", { email, ok: res.ok });
+      if (res.ok) {
+        setSent(true);
+        // optional: clear the form
+        // setEmail(""); setMsg("");
+      } else {
+        alert("Something went wrong sending your message.");
+      }
+    } catch {
+      alert("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   return (
     <section id="chat" className="py-16 md:py-24 border-t border-white/10">
       <div className="mx-auto max-w-3xl px-4 text-center">
         <h2 className="text-3xl md:text-4xl font-bold">Questions? Talk to a human.</h2>
-        <p className="mt-3 text-white/80">Email us at <a className="underline" href="mailto:founders@facetfence.com">founders@facetfence.com</a> or drop a note below.</p>
+        <p className="mt-3 text-white/80">
+          Email us at <a className="underline" href="mailto:founders@facetfence.com">founders@facetfence.com</a> or drop a note below.
+        </p>
         <form onSubmit={send} className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left">
           <div className="grid md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
               <label className="text-xs text-white/60" htmlFor="contact-email">Email</label>
-              <input id="contact-email" required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none focus:border-white/30" placeholder="you@brand.com" />
+              <input
+                id="contact-email"
+                required
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none focus:border-white/30"
+                placeholder="you@brand.com"
+              />
             </div>
             <div className="md:col-span-2">
               <label className="text-xs text-white/60" htmlFor="contact-msg">Message</label>
-              <textarea id="contact-msg" required value={msg} onChange={e=>setMsg(e.target.value)} rows={3} className="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none focus:border-white/30" placeholder="Tell us what you need…" />
+              <textarea
+                id="contact-msg"
+                required
+                value={msg}
+                onChange={e => setMsg(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none focus:border-white/30"
+                placeholder="Tell us what you need…"
+              />
             </div>
           </div>
-          <button type="submit" className="mt-4 w-full rounded-2xl px-5 py-3 font-semibold" style={{ background: brand.blue }}>
-            {sent ? 'Sent — we\'ll reply ASAP' : 'Send message'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-4 w-full rounded-2xl px-5 py-3 font-semibold disabled:opacity-60"
+            style={{ background: brand.blue }}
+          >
+            {sent ? "Sent — we’ll reply ASAP" : loading ? "Sending…" : "Send message"}
           </button>
         </form>
       </div>
     </section>
   );
 }
+
 
 function LegalSections() {
   return (
