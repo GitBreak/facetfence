@@ -96,7 +96,7 @@ export default function FacetFenceLanding() {
       <header className="sticky top-0 z-40 bg-[#0b0e13]/70 backdrop-blur border-b border-white/10">
         <div className="mx-auto max-w-7xl px-4 py-3 md:py-4 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-[var(--brand-blue)]" style={{ ['--brand-blue' as any]: brand.blue }} />
+            <div className="h-8 w-8 rounded-xl" style={{ background: brand.blue }} />
             <span className="text-lg md:text-xl font-semibold">FacetFence</span>
           </a>
           <nav className="hidden md:flex items-center gap-7">
